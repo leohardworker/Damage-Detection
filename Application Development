@@ -1,23 +1,13 @@
-"In the project I developed, I worked on implementing the ability to detect damage using sound frequencies. This approach is known as 'acoustic damage detection' and utilizes sound waves to identify structural damages.
+class SoundWave:
+    def __init__(self, frequency, amplitude):
+        self.frequency = frequency
+        self.amplitude = amplitude
 
-How It Works:
+    def transmit(self):
+        print(f"A sound wave is being transmitted at {self.frequency} Hz frequency and {self.amplitude} amplitude.")
 
-Transmission of Sound Waves: In the project, I used a specialized sound source to create sound waves.
+# Create an instance of a sound wave
+sound_wave = SoundWave(440, 0.5)
 
-Reflection and Absorption in the Structure: Sound waves are reflected, absorbed, or transmitted differently by various materials within the structure. Damaged areas exhibit distinct responses from normal areas.
-
-Sound Sensors or Microphones: I employed sensitive sound sensors and microphones to measure the detected sound waves.
-
-Data Analysis and Comparison: I analyzed and compared the collected data using computer programs. During this stage, I evaluated the differences in sound characteristics between normal and damaged areas.
-
-Damage Detection: The analysis results were utilized to determine the location, type, and magnitude of potential damage within the structure. For instance, damages such as cracks or material weaknesses could be identified.
-
-Advantages and Applications:
-
-Inaccessibility: I applied this sound-based method in areas where visual inspection was not feasible or challenging, detecting damage accurately.
-
-Swift and Accurate Results: When accurate sensors and analysis methods are employed, sound-based damage detection provides rapid and precise results.
-
-Structural Integrity Monitoring: In the project, I developed this method for continuous monitoring of structures. I assisted in ensuring the continuous tracking of structural integrity in large infrastructure projects or industrial facilities.
-
-In this project, I conducted comprehensive work both in terms of hardware and software to enhance the ability to detect damage using sound frequencies."
+# Transmit the sound wave
+sound_wave.transmit()
