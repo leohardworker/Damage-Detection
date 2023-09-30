@@ -1,1 +1,58 @@
+import sqlite3
+import numpy as np
+from sklearn.decomposition import PCA
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score
+
+# Connect to the database
+connection = sqlite3.connect("audio_database.db")
+cursor = connection.cursor()
+
+# Fetch audio data and labels
+cursor.execute("SELECT FrequencyData, Label FROM Audios")
+data = cursor.fetchall()
+
+audio_data = []
+labels = []
+
+for item in data:
+    frequency_data = np.frombuffer(item[0], dtype=np.float32)
+    label = item[1]
+    audio_data.append(frequency_data)
+    labels.append(label)
+
+# Scale the data
+scaler = MinMaxScaler()
+scaled_audio_data = scaler.fit_transform(audio_data)
+
+# Perform PCA for dimensionality reduction
+pca = PCA(n_components=0.95)
+reduced_audio_data = pca.fit_transform(scaled_audio_data)
+
+# Split the data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(reduced_audio_data, labels, test_size=0.2, random_state=42)
+
+# Create and train the Random Forest classifier
+model = RandomForestClassifier(n_estimators=100, random_state=42)
+model.fit(X_train, y_train)
+
+# Make predictions on the test set
+predictions = model.predict(X_test)
+
+# Evaluate the model's accuracy
+accuracy = accuracy_score(y_test, predictions)
+print(f"Accuracy: {accuracy}")
+
+# Predict labels for new audio data
+new_audio_data = ...  # Add the new audio data here
+scaled_new_audio_data = scaler.transform(new_audio_data)
+reduced_new_audio_data = pca.transform(scaled_new_audio_data)
+predicted_labels = model.predict(reduced_new_audio_data)
+
+print(f"Predicted Labels: {predicted_labels}")
+
+# Close the database connection
+connection.close()
 
