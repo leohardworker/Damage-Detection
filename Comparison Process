@@ -1,1 +1,44 @@
+import librosa
+import numpy as np
+import sqlite3
+from sklearn.metrics.pairwise import cosine_similarity
+
+# Connect to the database
+connection = sqlite3.connect("audio_database.db")
+cursor = connection.cursor()
+
+# Load trained audio samples and their labels from the database
+cursor.execute("SELECT FeatureVector, Label FROM AudioSamples")
+data = cursor.fetchall()
+samples = []
+labels = []
+
+for feature_vector, label in data:
+    mel_frequencies = np.frombuffer(feature_vector, dtype=np.float32)
+    samples.append(mel_frequencies)
+    labels.append(label)
+
+# Load the incoming audio and extract its features
+incoming_audio_file = "incoming_audio.wav"
+incoming_audio, _ = librosa.load(incoming_audio_file)
+incoming_mel_frequencies = librosa.feature.melspectrogram(y=incoming_audio, sr=len(incoming_audio))
+incoming_mel_frequencies = np.ndarray.flatten(incoming_mel_frequencies)
+
+# Evaluate similarities using Cosine Similarity
+similarity_scores = []
+for trained_sample in samples:
+    similarity_score = cosine_similarity([incoming_mel_frequencies], [trained_sample])
+    similarity_scores.append(similarity_score[0][0])
+
+# Find the sample with the highest similarity
+highest_similarity_index = np.argmax(similarity_scores)
+highest_similarity_sample = labels[highest_similarity_index]
+highest_similarity_score = similarity_scores[highest_similarity_index]
+
+# Print the results
+print(f"The incoming audio has the highest similarity to the sample labeled '{highest_similarity_sample}'.")
+print(f"Similarity Score: {highest_similarity_score}")
+
+# Close the database connection
+connection.close()
 
