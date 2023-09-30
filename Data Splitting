@@ -1,1 +1,57 @@
+import os
+import numpy as np
+import librosa
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score
+
+# Load audio files from the database
+def load_audio_files(directory):
+    audio_data = []
+    labels = []
+    for file in os.listdir(directory):
+        if file.endswith('.wav'):
+            file_path = os.path.join(directory, file)
+            audio, _ = librosa.load(file_path, sr=None)  # Load audio file
+            mfccs = librosa.feature.mfcc(y=audio, sr=16000, n_mfcc=13)  # Extract MFCC features
+            audio_data.append(mfccs.T)
+            labels.append(file.split('_')[0])  # Label of the audio file (e.g., speaker number)
+    return np.vstack(audio_data), np.array(labels)
+
+# Preprocess the data
+def preprocess_data(X):
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X)
+    pca = PCA(n_components=50)
+    X_pca = pca.fit_transform(X)
+    return X_pca
+
+# Split the dataset
+def split_dataset(X, y):
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
+    return X_train, X_test, y_train, y_test
+
+# Create and train the model
+def create_and_train_model(X_train, y_train):
+    model = RandomForestClassifier(random_state=42)
+    model.fit(X_train, y_train)
+    return model
+
+# Evaluate the model performance
+def evaluate_performance(model, X_test, y_test):
+    predictions = model.predict(X_test)
+    accuracy = accuracy_score(y_test, predictions)
+    return accuracy
+
+# Main process
+if __name__ == "__main__":
+    audio_directory = '/path/to/your/audio/files'  # Directory where audio files are located
+    audio_data, labels = load_audio_files(audio_directory)
+    X = preprocess_data(audio_data)
+    X_train, X_test, y_train, y_test = split_dataset(X, labels)
+    trained_model = create_and_train_model(X_train, y_train)
+    accuracy = evaluate_performance(trained_model, X_test, y_test)
+    print("Test Accuracy: {:.2f}%".format(accuracy * 100))
 
