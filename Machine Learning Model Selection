@@ -1,1 +1,71 @@
+import os
+import librosa
+import numpy as np
+from sklearn.model_selection import train_test_split
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense
+from tensorflow.keras.utils import to_categorical
+
+# Load audio files and extract MFCC features
+def load_and_extract_features(audio_directory, num_classes):
+    audio_data = []
+    labels = []
+    for file in os.listdir(audio_directory):
+        if file.endswith('.wav'):
+            file_path = os.path.join(audio_directory, file)
+            audio, sr = librosa.load(file_path, sr=None)
+            mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=13)
+            if mfccs.shape[1] == 44:  # For example, making all feature vectors the same length
+                audio_data.append(mfccs.T)
+                label = int(file.split('_')[0])  # Extract label from file name
+                labels.append(to_categorical(label, num_classes=num_classes))  # One-hot encoding
+    return np.array(audio_data), np.array(labels)
+
+# Load data and extract features
+audio_directory = '/path/to/your/audio/files'
+num_classes = 10  # For example, if there are 10 different classes
+audio_data, labels = load_and_extract_features(audio_directory, num_classes)
+
+# Split data into training and test sets
+X_train, X_test, y_train, y_test = train_test_split(audio_data, labels, test_size=0.2, random_state=42)
+
+# Create a deep learning model
+model = Sequential()
+model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(44, 13, 1)))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+model.add(Flatten())
+model.add(Dense(128, activation='relu'))
+model.add(Dense(num_classes, activation='softmax'))
+
+# Compile the model
+model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy'])
+
+# Train the model
+X_train = X_train.reshape(X_train.shape[0], 44, 13, 1)
+X_test = X_test.reshape(X_test.shape[0], 44, 13, 1)
+model.fit(X_train, y_train, epochs=10, batch_size=32, validation_data=(X_test, y_test))
+
+# Evaluate the model
+test_loss, test_accuracy = model.evaluate(X_test, y_test, verbose=2)
+print("Test Accuracy: {:.2f}%".format(test_accuracy * 100))
+
+# Predict new audio files
+def predict(model, file_path):
+    audio, sr = librosa.load(file_path, sr=None)
+    mfccs = librosa.feature.mfcc(y=audio, sr=sr, n_mfcc=13)
+    if mfccs.shape[1] == 44:
+        mfccs = mfccs.T.reshape(1, 44, 13, 1)
+        result = model.predict(mfccs)
+        predicted_label = np.argmax(result, axis=1)
+        return predicted_label[0]
+    else:
+        return None
+
+# Example of predicting new audio files
+new_file_path = '/path/to/your/new/audio/file.wav'
+prediction = predict(model, new_file_path)
+if prediction is not None:
+    print("Predicted Label: {}".format(prediction))
+else:
+    print("Invalid Audio File Size")
 
